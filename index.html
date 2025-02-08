@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bed Race Analytics</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --secondary: #3b82f6;
+            --background: #0f172a;
+            --surface: #1e293b;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-gold: #fbbf24;
+            --accent-blue: #60a5fa;
+            --gradient-1: linear-gradient(135deg, #2563eb, #60a5fa);
+            --gradient-2: linear-gradient(135deg, #fbbf24, #f59e0b);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* Enhanced Navbar */
+        .nav {
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(10px);
+            position: fixed;
+            width: 100%;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+        }
+
+        .nav-logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-primary);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.5rem 0;
+            position: relative;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--accent-blue);
+            transition: width 0.3s ease;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+      
+            .slideshow {
+                height: 100vh;
+                position: relative;
+                overflow: hidden;
+                background: var(--surface);
+            }
+        
+            .slide {
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                opacity: 0;
+                transform: scale(1.1);
+                transition: all 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+                background-size: cover;
+                background-position: center;
+            }
+        
+            .slide::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(45deg, rgba(15, 23, 42, 0.7), rgba(15, 23, 42, 0.3));
+            }
+        
+            .slide.active {
+                opacity: 1;
+                transform: scale(1);
+                z-index: 1;
+            }
+        
+            .slide-content {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                text-align: center;
+                width: 90%;
+                max-width: 1200px;
+            }
+        
+            .slide-content h2 {
+                font-size: 4.5rem;
+                font-weight: 800;
+                margin-bottom: 2rem;
+                background: var(--gradient-2);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                opacity: 0;
+                transform: translateY(30px);
+                animation: textReveal 1s cubic-bezier(0.215, 0.610, 0.355, 1) forwards;
+            }
+        
+            .slide-content p {
+                font-size: 1.5rem;
+                color: var(--text-secondary);
+                opacity: 0;
+                transform: translateY(30px);
+                animation: textReveal 1s cubic-bezier(0.215, 0.610, 0.355, 1) 0.3s forwards;
+            }
+        
+            /* Navigation Controls */
+            .slide-nav {
+                position: absolute;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 100%;
+                display: flex;
+                justify-content: space-between;
+                padding: 0 2rem;
+                z-index: 2;
+            }
+        
+            .nav-btn {
+                background: rgba(255, 255, 255, 0.1);
+                backdrop-filter: blur(5px);
+                border: none;
+                width: 50px;
+                height: 50px;
+                border-radius: 50%;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+        
+            .nav-btn:hover {
+                background: rgba(255, 255, 255, 0.2);
+                transform: scale(1.1);
+            }
+        
+            /* Progress Bar */
+            .progress-container {
+                position: absolute;
+                bottom: 2rem;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 200px;
+                height: 3px;
+                background: rgba(255, 255, 255, 0.2);
+                z-index: 2;
+            }
+        
+            .progress-bar {
+                height: 100%;
+                background: var(--gradient-2);
+                width: 0%;
+                transition: width 5s linear;
+            }
+        
+            /* Dots Navigation */
+            .dots-nav {
+                position: absolute;
+                bottom: 3rem;
+                left: 50%;
+                transform: translateX(-50%);
+                display: flex;
+                gap: 1rem;
+                z-index: 2;
+            }
+        
+            .dot {
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.3);
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+        
+            .dot.active {
+                background: var(--gradient-2);
+                transform: scale(1.3);
+            }
+        
+            @keyframes textReveal {
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+        
+            @media (max-width: 768px) {
+                .slide-content h2 {
+                    font-size: 2.5rem;
+                }
+                
+                .slide-content p {
+                    font-size: 1.1rem;
+                }
+            }
+
+        /* Enhanced Visualization Cards */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        .visualization-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .viz-card {
+            background: var(--surface);
+            border-radius: 1rem;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .viz-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--gradient-1);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.3s ease;
+        }
+
+        .viz-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .viz-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .viz-card h3 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .viz-card .purpose {
+            color: var(--accent-blue);
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            font-weight: 500;
+        }
+
+        .viz-card .description {
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+            font-size: 1rem;
+            line-height: 1.7;
+        }
+
+        .viz-card .questions {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .viz-card .questions h4 {
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .viz-card .questions ul {
+            list-style: none;
+        }
+
+        .viz-card .questions li {
+            margin-bottom: 0.8rem;
+            padding-left: 1.5rem;
+            position: relative;
+            color: var(--text-secondary);
+        }
+
+        .viz-card .questions li::before {
+            content: "→";
+            color: var(--accent-blue);
+            position: absolute;
+            left: 0;
+        }
+
+        .viz-link {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.75rem 1.5rem;
+            background: var(--gradient-1);
+            color: white;
+            text-decoration: none;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .viz-link:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: var(--gradient-1);
+            z-index: 1001;
+            width: 0%;
+        }
+
+        /* About Section */
+        .about-us {
+            background: var(--surface);
+            padding: 6rem 2rem;
+            margin-top: 4rem;
+            position: relative;
+        }
+
+        .about-us::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(30, 41, 59, 0.5), var(--surface));
+            pointer-events: none;
+        }
+
+        .about-us-content {
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .about-us h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            background: var(--gradient-2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+        }
+
+        .about-us p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            line-height: 1.8;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .nav-content {
+                padding: 1rem;
+            }
+
+            .slide-content h2 {
+                font-size: 2.5rem;
+            }
+
+            .visualization-section {
+                grid-template-columns: 1fr;
+            }
+
+            .viz-card {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar"></div>
+    <nav class="nav">
+        <div class="nav-content">
+            <a href="#" class="nav-logo">Bed Race Analytics</a>
+            <ul class="nav-links">
+                <li><a href="#">Home</a></li>
+                <li><a href="#speed-chronicles">Speed Chronicles</a></li>
+                <li><a href="#bed-race-spectrum">Bed Race Spectrum</a></li>
+                <li><a href="#category-clash">Category Clash</a></li>
+                <li><a href="#about-us">About Us</a></li>
+            </ul>
+        </div>
+    </nav>
+
+
+<div class="slideshow">
+    <div class="slide active" style="background-image: url('https://www.yorkpress.co.uk/resources/images/5151587/?type=responsive-gallery-fullscreen')">
+        <div class="slide-content">
+            <h2>Discover Race Insights</h2>
+            <p>Interactive visualizations showcasing bed race performance and trends</p>
+        </div>
+    </div>
+    <div class="slide" style="background-image: url('https://www.emmawoodphotos.co.uk/wp-content/uploads/2015/09/BedRace_1.jpg')">
+        <div class="slide-content">
+            <h2>Analyze Performance</h2>
+            <p>Deep dive into race statistics and team metrics</p>
+        </div>
+    </div>
+    <div class="slide" style="background-image: url('https://visit-harrogate.transforms.svdcdn.com/production/assets/images/business-directory/Bed-Race-22_35-1-Small.jpeg?w=472&h=376&q=100&auto=format&fit=crop&dm=1685431225&s=4aada52b7a88a0aa1b74f9af617a8911')">
+        <div class="slide-content">
+            <h2>Track Progress</h2>
+            <p>Monitor improvements and identify patterns</p>
+        </div>
+    </div>
+
+    <div class="slide-nav">
+        <button class="nav-btn prev-btn">←</button>
+        <button class="nav-btn next-btn">→</button>
+    </div>
+
+    <div class="progress-container">
+        <div class="progress-bar"></div>
+    </div>
+
+    <div class="dots-nav"></div>
+</div>
+    <div class="container">
+        <div class="visualization-section">
+            <div class="viz-card">
+                <h3>Race Performance Timeline</h3>
+                <p class="purpose">Purpose: Track and analyze race performance trends over time</p>
+                <div class="description">
+                    An interactive timeline visualization that displays comprehensive race performance metrics across multiple years, enabling deep analysis of trends and patterns in race completion times and team performance.
+                </div>
+                <div class="questions">
+                    <h4>Key Questions Answered:</h4>
+                    <ul>
+                        <li>How have race completion times evolved over the years?</li>
+                        <li>What are the historical performance trends for different teams?</li>
+                        <li>Which years saw the most significant improvements in race times?</li>
+                    </ul>
+                </div>
+                <a href="./2.html" class="viz-link">Explore Timeline →</a>
+            </div>
+
+            <div class="viz-card">
+                <h3>Team Performance Dashboard</h3>
+                <p class="purpose">Purpose: Compare and analyze team strategies and outcomes</p>
+                <div class="description">
+                    A comprehensive dashboard that breaks down team performance metrics, including preparation strategies, race day execution, and final rankings, providing insights into successful race approaches.
+                </div>
+                <div class="questions">
+                    <h4>Key Questions Answered:</h4>
+                    <ul>
+                        <li>Which teams consistently perform well and why?</li>
+                        <li>How do different strategies impact race outcomes?</li>
+                        <li>What are the key factors contributing to team success?</li>
+                    </ul>
+                </div>
+                <a href="./prompt.html" class="viz-link">View Dashboard →</a>
+            </div>
+
+            <div class="viz-card">
+                <h3>Course Analysis Map</h3>
+                <p class="purpose">Purpose: Understand the impact of course sections on performance</p>
+                <div class="description">
+                    An interactive map visualization that breaks down performance data by course section, highlighting challenging areas and optimal racing lines through different parts of the track.
+                </div>
+                <div class="questions">
+                    <h4>Key Questions Answered:</h4>
+                    <ul>
+                        <li>Which course sections have the most impact on final times?</li>
+                        <li>How do teams perform in different weather conditions?</li>
+                        <li>What are the most challenging sections of the course?</li>
+                    </ul>
+                </div>
+                <a href="./stackedbarchart.html" class="viz-link">Explore Map →</a>
+            </div>
+        </div>
+    </div>
+    <section id="about-us" class="about-us">
+        <div class="about-us-content">
+            <h2>About Us</h2>
+            <p>Welcome to Bed Race Analytics, your premier destination for comprehensive analysis and insights into the exciting world of bed racing. Our platform combines cutting-edge data visualization with deep sporting expertise to bring you unparalleled coverage of this unique sporting event.</p>
+            <p>Founded by a team of passionate sports analysts and data scientists, we're dedicated to helping teams, spectators, and enthusiasts understand the intricacies of bed racing through detailed analysis and interactive visualizations. Our tools and insights have helped numerous teams improve their strategies and performance.</p>
+            <p>Through our advanced analytics platform, we strive to elevate the sport of bed racing by providing actionable insights, historical trends, and performance metrics that matter. Whether you're a competitor looking to gain an edge or a fan seeking deeper understanding, we're here to enhance your bed racing experience.</p>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <p>&copy; 2025 Bed Race Analytics. All rights reserved.</p>
+    </footer>
+
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const dotsNav = document.querySelector('.dots-nav');
+        const progressBar = document.querySelector('.progress-bar');
+    
+    // Initialize progress bar position on page load
+    updateProgressBar();
+    
+    function updateProgressBar() {
+        const scrollTop = window.scrollY;
+        const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+        const scrollPercent = (scrollTop / docHeight) * 100;
+
+        // Set the width of the progress bar to match the scroll position
+        progressBar.style.transition = 'none';  // Remove transition for instant updates
+        progressBar.style.width = scrollPercent + '%';
+    }
+
+    // Attach scroll event listener
+    window.addEventListener('scroll', () => {
+        // Make sure the progress bar updates in real-time as the user scrolls
+        updateProgressBar();
+    });
+        let currentSlide = 0;
+        let autoPlayInterval;
+        let isTransitioning = false;
+    
+        // Create dots navigation
+        slides.forEach((_, index) => {
+            const dot = document.createElement('div');
+            dot.classList.add('dot');
+            if (index === 0) dot.classList.add('active');
+            dot.addEventListener('click', () => goToSlide(index));
+            dotsNav.appendChild(dot);
+        });
+    
+        // Navigation functions
+        function goToSlide(index) {
+            if (isTransitioning || index === currentSlide) return;
+            
+            isTransitioning = true;
+            slides[currentSlide].classList.remove('active');
+            document.querySelectorAll('.dot')[currentSlide].classList.remove('active');
+            
+            currentSlide = (index + slides.length) % slides.length;
+            
+            slides[currentSlide].classList.add('active');
+            document.querySelectorAll('.dot')[currentSlide].classList.add('active');
+           
+            
+            setTimeout(() => {
+                isTransitioning = false;
+            }, 1000);
+        }
+    
+        function nextSlide() {
+            goToSlide(currentSlide + 1);
+        }
+    
+        function previousSlide() {
+            goToSlide(currentSlide - 1);
+        }
+    
+        // Progress bar control
+        function resetProgressBar() {
+            progressBar.style.transition = 'none';
+            progressBar.style.width = '0%';
+            void progressBar.offsetWidth; // Trigger reflow
+            progressBar.style.transition = 'width 5s linear';
+            progressBar.style.width = '100%';
+        }
+    
+        // Event listeners
+        document.querySelector('.next-btn').addEventListener('click', nextSlide);
+        document.querySelector('.prev-btn').addEventListener('click', previousSlide);
+    
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') nextSlide();
+            if (e.key === 'ArrowLeft') previousSlide();
+        });
+    
+        // Touch/swipe handling
+        let touchStartX = 0;
+        const slideshow = document.querySelector('.slideshow');
+    
+        slideshow.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+        });
+    
+        slideshow.addEventListener('touchend', (e) => {
+            const touchEndX = e.changedTouches[0].clientX;
+            const diff = touchStartX - touchEndX;
+            
+            if (Math.abs(diff) > 50) {
+                if (diff > 0) nextSlide();
+                else previousSlide();
+            }
+        });
+    
+     
+        autoPlayInterval = setInterval(nextSlide, 5000);
+    
+        // Pause autoplay on interaction
+       
+        slideshow.addEventListener('mouseleave', () => {
+            clearInterval(autoPlayInterval); 
+            autoPlayInterval = setInterval(nextSlide, 5000);    
+          
+        });
+    </script>
+</body>
+</html>

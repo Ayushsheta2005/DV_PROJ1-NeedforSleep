@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #1a1f35 0%, #2d3456 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+
+        .container {
+            background: rgba(209, 205, 205, 0.05);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            max-width: 1400px;
+            margin: 0 auto;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+
+        .title {
+            font-family: 'Orbitron', sans-serif;
+            text-align: center;
+            color: #fff;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            font-weight: 700;
+            text-shadow: 0 0 15px rgba(14, 165, 233, 0.5);
+            letter-spacing: 2px;
+            background: linear-gradient(45deg, #0ea5e9, #38bdf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        #team-dashboard {
+            display: none;
+            background: rgba(20, 25, 45, 0.8);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            backdrop-filter: blur(10px);
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .dashboard-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .dashboard-card:hover {
+            transform: scale(1.05);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .dashboard-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #38bdf8;
+        }
+
+        .dashboard-value {
+            font-size: 1.2em;
+            font-weight: 500;
+        }
+
+        #cell {
+            transition: all 0.3s ease;
+        }
+
+        #cell:hover {
+            transform: scale(1.05);
+        }
+        #error-message {
+            color: #f87171;
+            text-align: center;
+            padding: 20px;
+            display: none;
+            background: rgba(248, 113, 113, 0.1);
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(248, 113, 113, 0.2);
+        }
+
+        .legend text {
+            fill: rgba(255, 255, 255, 0.8);
+            font-size: 12px;
+        }
+
+        .legend-title {
+            fill: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .tooltip {
+    position: absolute;
+    padding: 15px;
+    background: rgba(20, 25, 45, 0.95);
+    color: white;
+    border-radius: 8px;
+    font-size: 14px;
+    pointer-events: none;
+    z-index: 1000;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2),
+                0 0 20px rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    max-width: 300px;
+    transform: translateY(0);
+    transition: all 0.2s ease;
+}
+
+.tooltip-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    padding-bottom: 5px;
+    color: #fff;
+}
+
+.tooltip-stat {
+    display: flex;
+    justify-content: space-between;
+    margin: 5px 0;
+    padding: 3px 0;
+}
+
+.tooltip-label {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.tooltip-value {
+    font-weight: 500;
+    color: #fff;
+}
+
+.trend-improving {
+    color: #4ade80;
+}
+
+.trend-declining {
+    color: #f87171;
+}
+        
+    </style>
+</head>
+
+<body>
+    <div class="container" justify-content="center" align="center">
+        <h2 class="title" style="font-family: Poppins;">Category Clash (2015-Present)</h2>
+        <div id="error-message"></div>
+        <div id="heatmap"></div>
+        <div id="team-dashboard"></div>
+    </div>
+
+    <script>
+
+        // Helper function to show errors
+        function showError(message) {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+        document.getElementById('heatmap').style.paddingRight = '90px';
+
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const secs = Math.round(seconds % 60);
+            return `${minutes}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function createTeamDashboard(data) {
+            const dashboardEl = document.getElementById('team-dashboard');
+            dashboardEl.innerHTML = `
+                <div class="dashboard-grid">
+                    <div class="dashboard-card">
+                        <div class="dashboard-title">🥇 Top Performer</div>
+                        <div class="dashboard-value">${data.topTeam.name} (${formatTime(data.topTeam.time)})</div>
+                    </div>
+                    <div class="dashboard-card">
+                        <div class="dashboard-title">📊 Average Time</div>
+                        <div class="dashboard-value">${formatTime(data.avgTime)}</div>
+                    </div>
+                    <div class="dashboard-card">
+                        <div class="dashboard-title">⏱️ Slowest Team</div>
+                        <div class="dashboard-value">${data.worstTeam.name} (${formatTime(data.worstTeam.time)})</div>
+                    </div>
+                </div>
+            `;
+            dashboardEl.style.display = 'block';
+
+            // GSAP entrance animation
+            gsap.from(".dashboard-card", {
+                opacity: 1,
+                // y: -50,
+                stagger: 0.2,
+                duration: 0.5,
+                ease: "power2.out"
+            });
+        }
+
+        function processData(csvData) {
+            // Existing processData function with minimal changes
+            const startYear = 2015;
+            const years = [...new Set(csvData.map(d => +d.Year))]
+                .filter(year => year >= startYear)
+                .sort();
+
+            csvData.forEach(d => {
+                d.totalSeconds = (+d['Time (Minutes)'] * 60) + (+d['Time (Seconds)']);
+            });
+
+            const categories = [...new Set(csvData.map(d => d.Category))];
+            const validCategories = categories.filter(category => {
+                return years.every(year =>
+                    csvData.some(d => +d.Year === year && d.Category === category)
+                );
+            });
+
+            const processedData = [];
+            validCategories.forEach(category => {
+                let previousAvg = null;
+                years.forEach(year => {
+                    const yearData = csvData.filter(d =>
+                        +d.Year === year && d.Category === category
+                    );
+                    const avgTime = d3.mean(yearData, d => d.totalSeconds);
+                    const trend = previousAvg ? (previousAvg - avgTime) : 0;
+                    processedData.push({
+                        year: year,
+                        category: category,
+                        value: avgTime,
+                        rawData: yearData,
+                        trend: trend
+                    });
+                    previousAvg = avgTime;
+                });
+            });
+
+            return { years, categories: validCategories, data: processedData };
+        }
+
+        // Create heatmap function
+        function createHeatmap(data) {
+            d3.select("#heatmap").html("");
+
+            const margin = { top: 50, right: 70, bottom: 50, left: 120 };
+            const width = 800 - margin.left - margin.right;
+            const height = Math.max(400, data.categories.length * 40) - margin.top - margin.bottom;
+
+            const svg = d3.select("#heatmap")
+                .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+
+            const x = d3.scaleBand()
+                .range([0, width])
+                .domain(data.years)
+                .padding(0.05);
+
+            const y = d3.scaleBand()
+                .range([height, 0])
+                .domain(data.categories)
+                .padding(0.05);
+
+            // Modern blue color scale
+            const colorScale = d3.scaleSequential()
+                .interpolator(d3.interpolateRgb("#0ea5e9", "#0c4a6e"))
+                .domain([
+                    d3.max(data.data, d => d.value),
+                    d3.min(data.data, d => d.value)
+                ]);
+
+            const tooltip = d3.select("body")
+                .append("div")
+                .attr("class", "tooltip")
+                .style("opacity", 0);
+
+            // Add cells with modern hover effect
+            svg.selectAll("rect")
+                .data(data.data)
+                .enter()
+                .append("rect")
+                .attr("x", d => x(d.year))
+                .attr("y", d => y(d.category))
+                .attr("width", x.bandwidth())
+                .attr("height", y.bandwidth())
+                .attr("class", "cell")
+                .style("fill", d => colorScale(d.value))
+                .on("mouseover", function (event, d) {
+    // Add glow effect
+    d3.select(this)
+        .style("filter", "drop-shadow(0 0 8px rgba(255, 255, 255, 0.3))");
+
+    tooltip.html(`
+        <div class="tooltip-title">${d.category} - ${d.year}</div>
+        <div class="tooltip-stat">
+            <span class="tooltip-label">Average Time:</span>
+            <span class="tooltip-value">${formatTime(d.value)}</span>
+        </div>
+        <div class="tooltip-stat">
+            <span class="tooltip-label">Teams:</span>
+            <span class="tooltip-value">${d.rawData.length}</span>
+        </div>
+        <div class="tooltip-stat">
+            <span class="tooltip-label">Best Time:</span>
+            <span class="tooltip-value">${formatTime(d3.min(d.rawData, r => r.totalSeconds))}</span>
+        </div>
+        <div class="tooltip-stat">
+            <span class="tooltip-label">Worst Time:</span>
+            <span class="tooltip-value">${formatTime(d3.max(d.rawData, r => r.totalSeconds))}</span>
+        </div>
+        ${d.trend !== 0 ? `
+        <div class="tooltip-stat">
+            <span class="tooltip-label">Trend:</span>
+            <span class="tooltip-value ${d.trend > 0 ? 'trend-improving' : 'trend-declining'}">
+                ${d.trend > 0 ? '▲ Improving' : '▼ Declining'}
+            </span>
+        </div>
+        ` : ''}
+    `)
+    .style("left", (event.pageX + 10) + "px")  // Keeps it near cursor horizontally
+    .style("top", (event.pageY - tooltip.node().offsetHeight - 15) + "px") // Moves it **above** cursor
+    .transition()
+    .duration(200)
+    .style("opacity", 1);
+})
+
+
+                .on("mouseout", function () {
+                    d3.select(this)
+                        .style("filter", "none");
+
+                    tooltip.transition()
+                        .duration(200)
+                        .style("opacity", 0);
+                })
+                .on("click", function (event, d) {
+                    // Find top, average, and worst teams for this cell
+                    const dashboardData = {
+                        topTeam: d.rawData.reduce((min, team) =>
+                            team.totalSeconds < min.totalSeconds ? team : min,
+                            d.rawData[0]
+                        ),
+                        worstTeam: d.rawData.reduce((max, team) =>
+                            team.totalSeconds > max.totalSeconds ? team : max,
+                            d.rawData[0]
+                        ),
+                        avgTime: d3.mean(d.rawData, r => r.totalSeconds)
+                    };
+
+                    createTeamDashboard({
+                        ...dashboardData,
+                        topTeam: {
+                            name: dashboardData.topTeam['Team Name'],
+                            time: dashboardData.topTeam.totalSeconds
+                        },
+                        worstTeam: {
+                            name: dashboardData.worstTeam['Team Name'],
+                            time: dashboardData.worstTeam.totalSeconds
+                        }
+                    });
+                });
+
+            gsap.from("rect.cell", {
+                scale: 0,
+                opacity: 0,
+                stagger: 0.01,
+                duration: 0.5,
+                ease: "back.out(1.7)"
+            });
+        
+
+        // Add axes with modern styling
+        svg.append("g")
+            .attr("class", "axis")
+            .attr("transform", `translate(0,${height})`)
+            .call(d3.axisBottom(x));
+
+        svg.append("g")
+            .attr("class", "axis")
+            .call(d3.axisLeft(y));
+
+        // Add modern legend
+        const legendWidth = 20;
+        const legendHeight = height;
+        const legend = svg.append("g")
+            .attr("class", "legend")
+            .attr("transform", `translate(${width + 20}, 0)`);
+
+        const legendScale = d3.scaleSequential()
+            .interpolator(d3.interpolateRgb("#0ea5e9", "#0c4a6e"))
+            .domain([d3.max(data.data, d => d.value), d3.min(data.data, d => d.value)]);
+
+        legend.append("g")
+            .attr("transform", `translate(${legendWidth},0)`)
+            .call(d3.axisRight()
+                .scale(d3.scaleLinear()
+                    .domain([d3.max(data.data, d => d.value), d3.min(data.data, d => d.value)])
+                    .range([legendHeight, 0]))
+                .ticks(5)
+                .tickFormat(formatTime));
+
+        const legendGradient = legend.append("defs")
+            .append("linearGradient")
+            .attr("id", "legend-gradient")
+            .attr("x1", "0%")
+            .attr("y1", "100%")
+            .attr("x2", "0%")
+            .attr("y2", "0%");
+
+        legendGradient.selectAll("stop")
+            .data(d3.ticks(0, 1, 10))
+            .enter()
+            .append("stop")
+            .attr("offset", d => d * 100 + "%")
+            .attr("stop-color", d => legendScale(d * (d3.max(data.data, d => d.value) - d3.min(data.data, d => d.value)) + d3.min(data.data, d => d.value)));
+
+        legend.append("rect")
+            .attr("width", legendWidth)
+            .attr("height", legendHeight)
+            .style("fill", "url(#legend-gradient)")
+            .style("stroke", "rgba(255, 255, 255, 0.2)")
+            .style("stroke-width", "1px");
+        }
+
+        // Load and initialize the visualization
+        d3.csv("bed_race_results.csv")
+            .then(data => {
+                if (data.length === 0) {
+                    showError("No data found in the CSV file");
+                    return;
+                }
+
+                const processedData = processData(data);
+
+                if (processedData.categories.length === 0) {
+                    showError("No categories found that participated in all years since 2015");
+                    return;
+                }
+
+                createHeatmap(processedData);
+            })
+            .catch(error => {
+                showError("Error loading the CSV file: " + error.message);
+            });
+    </script>
+</body>
+
+</html>

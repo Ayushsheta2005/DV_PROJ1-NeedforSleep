@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bed Race Results Analysis (2015 onwards)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            --primary-color: #0C1E3C;
+            --secondary-color: #1A73E8;
+            --accent-color: #00F3B9;
+            --background-color: #080F1F;
+            --text-color: #E0E7FF;
+            --card-bg: rgba(13, 23, 45, 0.95);
+            --hover-color: #2196F3;
+            --grid-color: rgba(255, 255, 255, 0.05);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--background-color), #1A1F35);
+            color: var(--text-color);
+            padding: 2rem;
+            min-height: 100vh;
+            background-attachment: fixed;
+        }
+
+        .dashboard {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            border-radius: 24px;
+            box-shadow: 0 8px 32px rgba(0, 243, 185, 0.1);
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dashboard::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(0deg,
+                    var(--grid-color) 0px,
+                    var(--grid-color) 1px,
+                    transparent 1px,
+                    transparent 20px),
+                repeating-linear-gradient(90deg,
+                    var(--grid-color) 0px,
+                    var(--grid-color) 1px,
+                    transparent 1px,
+                    transparent 20px);
+            pointer-events: none;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            background: linear-gradient(135deg, var(--accent-color), #4CC9F0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 2px 10px rgba(76, 201, 240, 0.3);
+        }
+
+        .controls {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 1;
+        }
+
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--secondary-color), #4CC9F0);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 15px rgba(26, 115, 232, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease-out, height 0.6s ease-out;
+        }
+
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(26, 115, 232, 0.3);
+        }
+
+        .btn.active {
+            background: linear-gradient(135deg, var(--accent-color), #4CC9F0);
+        }
+
+        /* Fixed select styling */
+        select.btn {
+            appearance: none;
+            padding-right: 2.5rem;
+            background: linear-gradient(135deg, var(--secondary-color), #4CC9F0);
+            color: white;
+            cursor: pointer;
+
+            option {
+                background: var(--card-bg);
+                color: var(--text-color);
+                padding: 10px;
+            }
+        }
+
+        /* Updated select background arrow */
+        select.btn {
+            background-image:
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"),
+                linear-gradient(135deg, var(--secondary-color), #4CC9F0);
+            background-repeat: no-repeat;
+            background-position: right 0.7rem center, 0 0;
+            background-size: 1.2rem, 100%;
+        }
+
+        /* Style select options */
+        select.btn option {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            padding: 12px;
+            font-size: 1rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 600px;
+            margin-bottom: 2rem;
+            border-radius: 16px;
+            background: rgba(13, 23, 45, 0.5);
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .tooltip {
+            position: absolute;
+            padding: 1rem 1.5rem;
+            background: rgba(13, 23, 45, 0.95);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            pointer-events: none;
+            font-size: 0.9rem;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            color: var(--text-color);
+            z-index: 1000;
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: rgba(13, 23, 45, 0.5);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .legend-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .legend-color {
+            width: 18px;
+            height: 18px;
+            border-radius: 6px;
+            transition: transform 0.3s ease;
+        }
+
+        .legend-item:hover .legend-color {
+            transform: scale(1.2);
+        }
+
+        .axis text {
+            font-size: 12px;
+            fill: var(--text-color);
+            opacity: 0.8;
+        }
+
+        .axis path,
+        .axis line {
+            stroke: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Individual bar hover effect (removed chart container animation) */
+        rect {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        rect:hover {
+            filter: brightness(1.2);
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--background-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--secondary-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-color);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .chart-type-btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--secondary-color), #4CC9F0);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 500;
+        }
+
+        .chart-type-btn.active {
+            background: linear-gradient(135deg, var(--accent-color), #4CC9F0);
+        }
+
+        .streamPath {
+            opacity: 1;  /* Changed from 0.8 to 1 */
+            transition: opacity 0.3s ease;
+            filter: brightness(1);  /* Added default brightness */
+        }
+
+        .streamPath:hover {
+            filter: brightness(1.2);  /* Changed from opacity to brightness to match bar hover effect */
+        }
+    </style>
+</head>
+
+<body>
+    <div class="dashboard">
+        <h1>Bed Race Spectrum (2015 onwards)</h1>
+        <div class="controls">
+            <div class="btn-group">
+                <button class="chart-type-btn active" data-type="stacked">Stacked Bar</button>
+                <button class="chart-type-btn" data-type="stream">Stream Graph</button>
+            </div>
+            <button class="btn" id="toggleView">Switch to Percentage</button>
+            <select class="btn" id="categoryFilter">
+                <option value="all">All Categories</option>
+            </select>
+        </div>
+        <div class="chart-container">
+            <div id="chart"></div>
+        </div>
+        <div class="legend" id="legend"></div>
+    </div>
+
+    <script>
+        // Initialize the visualization (same as before)
+        function initVisualization() {
+            const margin = { top: 40, right: 40, bottom: 60, left: 60 };
+            const width = 1000 - margin.left - margin.right;
+            const height = 500 - margin.top - margin.bottom;
+
+            const svg = d3.select("#chart")
+                .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+
+            return { svg, width, height, margin };
+        }
+
+        // Process the data with year filtering
+        function processData(rawData) {
+            // Filter for years >= 2015 and convert time
+            const filteredData = rawData
+                .filter(d => +d.Year >= 2015)
+                .map(d => ({
+                    ...d,
+                    Year: +d.Year,
+                    'Time (Seconds)': +d['Time (Seconds)'] + (+d['Time (Minutes)'] * 60)
+                }));
+
+            // Group filtered data by year and category
+            const yearCategoryGroups = d3.group(filteredData, d => d.Year, d => d.Category);
+
+            // Get unique categories and years (2015 onwards)
+            const categories = Array.from(new Set(filteredData.map(d => d.Category))).sort();
+            const years = Array.from(new Set(filteredData.map(d => d.Year))).sort();
+
+            // Create data structure for stacked bar chart
+            const stackData = years.map(year => {
+                const yearData = { year };
+                categories.forEach(category => {
+                    const count = yearCategoryGroups.get(year)?.get(category)?.length || 0;
+                    yearData[category] = count;
+                });
+                return yearData;
+            });
+
+            return { stackData, categories, years };
+        }
+
+        // Create the visualization (same as before)
+        let colorScale;  // Store globally to reuse in both graphs
+
+function generateDistinctColors(categories) {
+    if (!colorScale) {
+        const generateColor = (h, s, l) => `hsl(${h}, ${s}%, ${l}%)`;
+        const colors = [];
+        const numberOfCategories = categories.length;
+
+        const huePrimary = [...Array(Math.ceil(numberOfCategories / 3))].map((_, i) => 
+            generateColor(i * (360 / Math.ceil(numberOfCategories / 3)), 70, 50)
+        );
+
+        const huePastel = [...Array(Math.ceil(numberOfCategories / 3))].map((_, i) => 
+            generateColor(i * (360 / Math.ceil(numberOfCategories / 3)), 70, 70)
+        );
+
+        const hueDeep = [...Array(Math.ceil(numberOfCategories / 3))].map((_, i) => 
+            generateColor(i * (360 / Math.ceil(numberOfCategories / 3)), 70, 30)
+        );
+
+        colors.push(...huePrimary, ...huePastel, ...hueDeep);
+        const shuffledColors = colors.slice(0, numberOfCategories).sort(() => Math.random() - 0.5);
+
+        colorScale = d3.scaleOrdinal().domain(categories).range(shuffledColors);
+    }
+    return colorScale;
+}
+
+
+        // Enhanced createVisualization function with improved legend handling
+        function createVisualization(processedData, elements) {
+            const { stackData, categories, years } = processedData;
+            const { svg, width, height } = elements;
+
+            // Use consistent color generation
+            const color = generateDistinctColors(categories);
+
+            const x = d3.scaleBand()
+                .domain(years)
+                .range([0, width])
+                .padding(0.1);
+
+            const y = d3.scaleLinear()
+                .range([height, 0]);
+
+            const stack = d3.stack()
+                .keys(categories)
+                .order(d3.stackOrderNone)
+                .offset(d3.stackOffsetNone);
+
+            const stackedData = stack(stackData);
+
+            y.domain([0, d3.max(stackedData, d => d3.max(d, d => d[1]))]);
+
+            // Add axes
+            svg.append("g")
+                .attr("class", "x axis")
+                .attr("transform", `translate(0,${height})`)
+                .call(d3.axisBottom(x).tickFormat(d => d.toString()));
+
+            svg.append("g")
+                .attr("class", "y axis")
+                .call(d3.axisLeft(y));
+
+            // Ensure tooltip is created only once
+            let tooltip = d3.select("body").select(".tooltip");
+            if (tooltip.empty()) {
+                tooltip = d3.select("body")
+                    .append("div")
+                    .attr("class", "tooltip")
+                    .style("opacity", 0);
+            }
+
+            // Create bars
+            const categoryGroups = svg.selectAll(".category")
+                .data(stackedData)
+                .enter().append("g")
+                .attr("class", "category")
+                .attr("fill", d => color(d.key));
+
+            const bars = categoryGroups.selectAll("rect")
+                .data(d => d.map(barData => ({
+                    ...barData,
+                    category: d.key,  // Add category information
+                    year: barData.data.year
+                })))
+                .enter().append("rect")
+                .attr("x", d => x(d.year))
+                .attr("y", d => y(d[1]))
+                .attr("height", d => y(d[0]) - y(d[1]))
+                .attr("width", x.bandwidth());
+
+            // Add interactivity to bars
+            bars.on("mouseover", function (event, d) {
+                const value = d[1] - d[0];
+
+                tooltip.transition()
+                    .duration(200)
+                    .style("opacity", .9);
+
+                tooltip.html(`
+            Year: ${d.year}<br/>
+            Category: ${d.category}<br/>
+            Participants: ${value}
+        `)
+                    .style("left", (event.pageX + 10) + "px")
+                    .style("top", (event.pageY - 28) + "px");
+            })
+                .on("mouseout", () => {
+                    tooltip.transition()
+                        .duration(500)
+                        .style("opacity", 0);
+                });
+
+            return {
+                x, y, stack, color, categoryGroups,
+                updateView: function (isPercentage) {
+                    const transitionDuration = 750;
+
+                    if (isPercentage) {
+                        const percentageData = stackData.map(yearData => {
+                            const total = categories.reduce((sum, cat) => sum + yearData[cat], 0);
+                            const percentageYearData = { year: yearData.year };
+                            categories.forEach(cat => {
+                                percentageYearData[cat] = (yearData[cat] / total) * 100;
+                            });
+                            return percentageYearData;
+                        });
+
+                        const percentageStackedData = stack(percentageData);
+                        y.domain([0, 100]);
+
+                        categoryGroups.selectAll("rect")
+                            .data(d => {
+                                const data = percentageStackedData.find(sd => sd.key === d.key);
+                                return data.map(barData => ({
+                                    ...barData,
+                                    category: d.key,
+                                    year: barData.data.year
+                                }));
+                            })
+                            .transition()
+                            .duration(transitionDuration)
+                            .attr("y", d => y(d[1]))
+                            .attr("height", d => y(d[0]) - y(d[1]));
+                    } else {
+                        y.domain([0, d3.max(stackedData, d => d3.max(d, d => d[1]))]);
+
+                        categoryGroups.selectAll("rect")
+                            .data(d => {
+                                const data = stackedData.find(sd => sd.key === d.key);
+                                return data.map(barData => ({
+                                    ...barData,
+                                    category: d.key,
+                                    year: barData.data.year
+                                }));
+                            })
+                            .transition()
+                            .duration(transitionDuration)
+                            .attr("y", d => y(d[1]))
+                            .attr("height", d => y(d[0]) - y(d[1]));
+                    }
+
+                    svg.select(".y.axis")
+                        .transition()
+                        .duration(transitionDuration)
+                        .call(d3.axisLeft(y));
+                }
+            };
+        }
+
+        function createStreamGraph(data, elements, color) {
+            const { svg, width, height } = elements;
+
+            // Clear existing elements
+            svg.selectAll("*").remove();
+
+            // Debug: Log initial data
+            console.log("Initial data:", data);
+
+            // Ensure we have valid data structure
+            if (!data || data.length === 0) {
+                console.error("No data available for stream graph");
+                return;
+            }
+
+            // Get categories (all keys except 'year')
+            const categories = Object.keys(data[0]).filter(key => key !== 'year');
+
+            // Debug: Log categories
+            console.log("Categories:", categories);
+
+            // Validate data format
+            data = data.map(d => {
+                const validatedData = { year: +d.year };  // Ensure year is a number
+                categories.forEach(cat => {
+                    validatedData[cat] = +d[cat] || 0;  // Convert to number, default to 0 if invalid
+                });
+                return validatedData;
+            });
+
+            // Debug: Log processed data
+            console.log("Processed data:", data);
+
+            // Calculate percentages
+            const percentageData = data.map(yearData => {
+                const total = categories.reduce((sum, cat) => sum + yearData[cat], 0);
+                const yearPercentages = { year: yearData.year };
+
+                categories.forEach(cat => {
+                    yearPercentages[cat] = total > 0 ? (yearData[cat] / total) * 100 : 0;
+                });
+
+                return yearPercentages;
+            });
+
+            // Debug: Log percentage data
+            console.log("Percentage data:", percentageData);
+
+            // Create stack layout
+            const stack = d3.stack()
+                .keys(categories)
+                .offset(d3.stackOffsetExpand)  // Normalize to show percentages
+                .order(d3.stackOrderNone);
+
+            // Generate stacked data and check for validity
+            const stackedData = stack(percentageData);
+
+            // Debug: Log stacked data
+            console.log("Stacked data:", stackedData);
+
+            // Set up scales
+            const x = d3.scaleLinear()
+                .domain(d3.extent(percentageData, d => d.year))
+                .range([0, width]);
+
+            const y = d3.scaleLinear()
+                .domain([0, 1])  // Using 0 to 1 for percentage scaling
+                .range([height, 0]);
+
+            // Create area generator
+            const area = d3.area()
+                .x(d => x(d.data.year))
+                .y0(d => y(d[0]))
+                .y1(d => y(d[1]))
+                .curve(d3.curveBasis);
+
+            // Add streams with error handling
+            try {
+                const streams = svg.selectAll(".stream")
+                    .data(stackedData)
+                    .enter()
+                    .append("path")
+                    .attr("class", "streamPath")
+                    .attr("d", area)
+                    .style("fill", d => color(d.key));  // Removed default opacity setting
+
+                // Debug: Check if streams were created
+                console.log("Number of streams created:", streams.size());
+
+                // Add hover interactivity
+                streams.on("mouseover", function (event, d) {
+                    // Highlight the hovered stream
+                    d3.select(this)
+                        .style("filter", "brightness(1.2)");  // Changed from opacity to brightness
+
+                    // Show tooltip
+                    const mouseX = x.invert(d3.pointer(event)[0]);
+                    const year = Math.round(mouseX);
+                    const yearData = percentageData.find(item => item.year === year);
+                    const value = yearData ? yearData[d.key].toFixed(1) : 0;
+
+                    const tooltip = d3.select("body")
+                        .selectAll(".tooltip")
+                        .data([null])
+                        .join("div")
+                        .attr("class", "tooltip")
+                        .style("opacity", 0);
+
+                    tooltip.transition()
+                        .duration(200)
+                        .style("opacity", .9);
+
+                    tooltip.html(`
+                Year: ${year}<br/>
+                Category: ${d.key}<br/>
+                Percentage: ${value}%
+            `)
+                        .style("left", (event.pageX + 10) + "px")
+                        .style("top", (event.pageY - 28) + "px");
+                })
+                    .on("mouseout", function () {
+                        d3.select(this)
+                            .style("filter", "brightness(1)");  // Reset brightness instead of opacity
+
+                        d3.select(".tooltip")
+                            .transition()
+                            .duration(500)
+                            .style("opacity", 0);
+                    });
+
+                // Add axes
+                svg.append("g")
+                    .attr("class", "x axis")
+                    .attr("transform", `translate(0,${height})`)
+                    .call(d3.axisBottom(x)
+                        .ticks(data.length)
+                        .tickFormat(d => Math.round(d)));
+
+                svg.append("g")
+                    .attr("class", "y axis")
+                    .call(d3.axisLeft(y)
+                        .tickFormat(d => `${(d * 100).toFixed(0)}%`));
+
+                // Add axis labels
+                svg.append("text")
+                    .attr("transform", "rotate(-90)")
+                    .attr("y", 0 - 65)
+                    .attr("x", 0 - (height / 2))
+                    .attr("dy", "1em")
+                    .style("text-anchor", "middle")
+                    .style("fill", "white")
+                    .text("Percentage of Total");
+                    
+
+            } catch (error) {
+                console.error("Error creating stream graph:", error);
+                svg.append("text")
+                    .attr("x", width / 2)
+                    .attr("y", height / 2)
+                    .attr("text-anchor", "middle")
+                    .text("Error creating stream graph. Check console for details.");
+            }
+
+            return {
+                color: color,
+                categoryGroups: svg.selectAll(".streamPath"),
+                updateSelectedCategory: function(category) {
+                    streams.style("opacity", d => 
+                        category === 'all' ? 1 : (d.key === category ? 1 : 0.2)
+                    );
+                }
+            };
+        }
+
+        // Main execution
+        d3.csv("bed_race_results.csv").then(rawData => {
+            const elements = initVisualization();
+            const processedData = processData(rawData);
+
+            // Generate a consistent color scale
+            const color = generateDistinctColors(processedData.categories);
+
+            // Clear any existing legend and recreate it
+            const legend = d3.select("#legend");
+            legend.html(""); // Clear existing legend
+processedData.categories.forEach(category => {
+    const legendItem = legend.append("div")
+        .attr("class", "legend-item");
+
+    legendItem.append("div")
+        .attr("class", "legend-color")
+        .style("background", color(category));
+
+    legendItem.append("span")
+        .text(category);
+
+    // Track visibility state for each category
+    let isVisible = true;
+
+    // Add legend interaction for both chart types
+    legendItem.on("click", function() {
+        const currentChart = d3.select(".chart-type-btn.active").attr("data-type");
+        const categoryGroups = currentChart === "stream"
+            ? d3.selectAll(".streamPath")
+            : d3.selectAll(".category");
+
+        // Toggle visibility state
+        isVisible = !isVisible;
+
+        // Update visibility based on the toggled state
+        categoryGroups
+            .filter((d, i, nodes) =>
+                d3.select(nodes[i]).style("fill") === color(category) ||
+                d3.select(nodes[i]).datum()?.key === category
+            )
+            .style("opacity", isVisible ? "1" : "0.2");
+    });
+});
+
+            let currentVis = createVisualization(processedData, elements);
+
+            // Set up chart type toggle
+            d3.selectAll(".chart-type-btn").on("click", function () {
+                const chartType = this.dataset.type;
+
+                // Update button states
+                d3.selectAll(".chart-type-btn").classed("active", false);
+                d3.select(this).classed("active", true);
+
+                // Clear existing chart
+                d3.select("#chart svg").remove();
+                const newElements = initVisualization();
+
+                if (chartType === "stream") {
+                    currentVis = createStreamGraph(processedData.stackData, newElements, color);
+                    d3.select("#toggleView").style("display", "none");
+                } else {
+                    currentVis = createVisualization(processedData, newElements);
+                    d3.select("#toggleView").style("display", "block");
+                }
+            });
+
+            // Set up toggle functionality
+            let isPercentage = false;
+            d3.select("#toggleView").on("click", function () {
+                isPercentage = !isPercentage;
+                this.textContent = isPercentage ? "Switch to Absolute" : "Switch to Percentage";
+
+                // Only apply percentage view to stacked bar chart
+                if (d3.select(".chart-type-btn.active").attr("data-type") === "stacked") {
+                    currentVis.updateView(isPercentage);
+                }
+            });
+
+            // Set up category filter
+            const categoryFilter = d3.select("#categoryFilter");
+            categoryFilter.html("<option value='all'>All Categories</option>");
+            processedData.categories.forEach(category => {
+                categoryFilter.append("option")
+                    .attr("value", category)
+                    .text(category);
+            });
+
+            categoryFilter.on("change", function () {
+                const selectedCategory = this.value;
+                const currentChart = d3.select(".chart-type-btn.active").attr("data-type");
+
+                if (currentChart === "stacked") {
+                    if (selectedCategory === "all") {
+                        currentVis.categoryGroups.style("opacity", 1);
+                    } else {
+                        currentVis.categoryGroups
+                            .style("opacity", d => d.key === selectedCategory ? 1 : 0.2);
+                    }
+                } else {
+                    // For stream graph
+                    const streamPaths = d3.selectAll(".streamPath");
+                    if (selectedCategory === "all") {
+                        streamPaths.style("opacity", 1);  // Changed from 0.8 to 1
+                    } else {
+                        streamPaths
+                            .style("opacity", d => d.key === selectedCategory ? 1 : 0.2);
+                    }
+                }
+            });
+        }).catch(error => {
+            console.error("Error loading the CSV file:", error);
+            d3.select("#chart")
+                .append("p")
+                .text("Error loading data. Please ensure the CSV file is correctly formatted and accessible.");
+        });
+    </script>
+</body>
+
+</html>

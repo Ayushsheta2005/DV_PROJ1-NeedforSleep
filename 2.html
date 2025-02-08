@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speed Chronicles: Advanced Bed Racing Analytics</title>
+    <link rel="stylesheet" href="2.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header Section -->
+        <header class="header">
+            <h1>🏎️ Speed Chronicles: Elite Bed Racing</h1>
+            <p>Advanced Analytics & Performance Tracking (1995-2023)</p>
+        </header>
+        
+        <!-- Controls Panel -->
+        <section class="controls-panel">
+            <div class="filters" id="filters">
+                <button class="filter-btn active" data-position="1">🥇 1st Place</button>
+                <button class="filter-btn active" data-position="2">🥈 2nd Place</button>
+                <button class="filter-btn active" data-position="3">🥉 3rd Place</button>
+                <button class="filter-btn" data-position="avg">📊 Average</button>
+            </div>
+            
+            <div class="view-controls">
+                <button class="view-btn active" data-view="time">⏱ Time View</button>
+                <button class="view-btn" data-view="team">🏁 Team View</button>
+            </div>
+        </section>
+
+        <!-- Data Visualization -->
+        <section class="visualization-container">
+            <div class="chart-container" id="lineChart"></div>
+            <div class="tooltip" id="tooltip"></div>
+            <div class="legend-container" id="teamLegend"></div>
+        </section>
+
+        <!-- Dashboard Stats -->
+        <section class="dashboard-stats" id="stats">
+            <div class="stat-box">
+                <h3>🏆 Course Record</h3>
+                <div class="stat-value" id="bestTime">--:--</div>
+                <small>Team: <span id="bestTeam">---</span></small>
+                <small>Year: <span id="bestYear">----</span></small>
+            </div>
+            <div class="stat-box">
+                <h3>🥇 Championship Leader</h3>
+                <div class="stat-value" id="totalWins">0</div>
+                <small>Team: <span id="topTeam">---</span></small>
+                <small>Win Rate: <span id="winRate">--%</span></small>
+            </div>
+            <div class="stat-box">
+                <h3>📈 Performance Trends</h3>
+                <div class="stat-value" id="avgImprovement">0%</div>
+                <small>Year-over-Year</small>
+                <small>Base Year: 1995</small>
+            </div>
+            <div class="stat-box">
+                <h3>🔍 Season Analysis</h3>
+                <div class="stat-value" id="competitiveness">0.0</div>
+                <small>Competitive Index (<1 is more competitive)</small>
+            </div>
+        </section>
+        
+        <!-- Analysis Panel -->
+        <section class="analysis-panel">
+            <div class="team-performance" id="teamPerformance">
+                <h3>📊 Team Performance Analysis</h3>
+                <div class="team-grid" id="teamGrid"></div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chroma-js/2.4.2/chroma.min.js"></script>
+    <script src="1.js"></script>
+</body>
+</html>
