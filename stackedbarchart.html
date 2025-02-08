@@ -294,6 +294,20 @@
         .streamPath:hover {
             filter: brightness(1.2);  /* Changed from opacity to brightness to match bar hover effect */
         }
+
+        .reference-line {
+            stroke: #ffffff;
+            stroke-width: 1;
+            stroke-dasharray: 4;
+            pointer-events: none;
+        }
+
+        .reference-label {
+            fill: #ffffff;
+            font-size: 12px;
+            pointer-events: none;
+            dominant-baseline: middle;
+        }
     </style>
 </head>
 
@@ -337,7 +351,7 @@
         function processData(rawData) {
             // Filter for years >= 2015 and convert time
             const filteredData = rawData
-                .filter(d => +d.Year >= 2015)
+                .filter(d => +d.Year)
                 .map(d => ({
                     ...d,
                     Year: +d.Year,
@@ -427,7 +441,16 @@ function generateDistinctColors(categories) {
 
             svg.append("g")
                 .attr("class", "y axis")
-                .call(d3.axisLeft(y));
+                .call(d3.axisLeft(y))
+                .append("text")
+                .attr("transform", "rotate(-90)")
+                .attr("y", 0 - 60)
+                .attr("x", 0 - (height / 2))
+                .attr("dy", "1em")
+                .style("text-anchor", "middle")
+                .style("fill", "white")
+                .text("Participants");
+
 
             // Ensure tooltip is created only once
             let tooltip = d3.select("body").select(".tooltip");
@@ -457,9 +480,27 @@ function generateDistinctColors(categories) {
                 .attr("height", d => y(d[0]) - y(d[1]))
                 .attr("width", x.bandwidth());
 
+            // Add reference line group
+            const referenceLine = svg.append("g")
+                .attr("class", "reference-line-group")
+                .style("opacity", 0);
+
+            referenceLine.append("line")
+                .attr("class", "reference-line");
+
+            referenceLine.append("text")
+                .attr("class", "reference-label")
+                .attr("text-anchor", "start")  // Changed from "end" to "start"
+                .attr("alignment-baseline", "middle");
+
+            // Add state variable to track percentage mode
+            let isPercentageMode = false;
+
             // Add interactivity to bars
             bars.on("mouseover", function (event, d) {
                 const value = d[1] - d[0];
+                const yearData = stackData.find(item => item.year === d.year);
+                const totalParticipants = categories.reduce((sum, cat) => sum + yearData[cat], 0);
 
                 tooltip.transition()
                     .duration(200)
@@ -472,17 +513,42 @@ function generateDistinctColors(categories) {
         `)
                     .style("left", (event.pageX + 10) + "px")
                     .style("top", (event.pageY - 28) + "px");
+
+                // Only show reference line in absolute mode
+                if (!isPercentageMode) {
+                    referenceLine.style("opacity", 1);
+                    
+                    referenceLine.select(".reference-line")
+                        .attr("x1", 0)  // Start from y-axis
+                        .attr("x2", x(d.year) + x.bandwidth())  // End at the bar
+                        .attr("y1", y(totalParticipants))  // Same y position for both points
+                        .attr("y2", y(totalParticipants));  // Same y position for both points
+
+                    // Position the label at the end of the line
+                    referenceLine.select(".reference-label")
+                        .attr("x", x(d.year) + x.bandwidth() + 5)  // Position after the bar
+                        .attr("y", y(totalParticipants))
+                        .text(`${totalParticipants}`);
+                }
             })
                 .on("mouseout", () => {
                     tooltip.transition()
                         .duration(500)
                         .style("opacity", 0);
+
+                    referenceLine.style("opacity", 0);
                 });
 
             return {
                 x, y, stack, color, categoryGroups,
                 updateView: function (isPercentage) {
+                    isPercentageMode = isPercentage; // Update the state
                     const transitionDuration = 750;
+
+                    // Hide reference line immediately when switching to percentage mode
+                    if (isPercentage) {
+                        referenceLine.style("opacity", 0);
+                    }
 
                     if (isPercentage) {
                         const percentageData = stackData.map(yearData => {
@@ -558,13 +624,15 @@ function generateDistinctColors(categories) {
             console.log("Categories:", categories);
 
             // Validate data format
-            data = data.map(d => {
-                const validatedData = { year: +d.year };  // Ensure year is a number
-                categories.forEach(cat => {
-                    validatedData[cat] = +d[cat] || 0;  // Convert to number, default to 0 if invalid
+            data = data
+                .filter(d => +d.year >= 2015 && +d.year !== 2016)  // Filter for years >= 2015 and exclude 2016
+                .map(d => {
+                    const validatedData = { year: +d.year };  // Ensure year is a number
+                    categories.forEach(cat => {
+                        validatedData[cat] = +d[cat] || 0;  // Convert to number, default to 0 if invalid
+                    });
+                    return validatedData;
                 });
-                return validatedData;
-            });
 
             // Debug: Log processed data
             console.log("Processed data:", data);
@@ -620,48 +688,42 @@ function generateDistinctColors(categories) {
                     .append("path")
                     .attr("class", "streamPath")
                     .attr("d", area)
-                    .style("fill", d => color(d.key));  // Removed default opacity setting
+                    .style("fill", d => color(d.key));
 
-                // Debug: Check if streams were created
-                console.log("Number of streams created:", streams.size());
+                // Create a single tooltip
+                const tooltip = d3.select("body")
+                    .selectAll(".tooltip")
+                    .data([null])
+                    .join("div")
+                    .attr("class", "tooltip")
+                    .style("opacity", 0);
 
                 // Add hover interactivity
-                streams.on("mouseover", function (event, d) {
-                    // Highlight the hovered stream
-                    d3.select(this)
-                        .style("filter", "brightness(1.2)");  // Changed from opacity to brightness
+                streams
+                    .on("mouseover", function(event, d) {
+                        d3.select(this).style("filter", "brightness(1.2)");
+                    })
+                    .on("mousemove", function(event, d) {
+                        const mouseX = x.invert(d3.pointer(event)[0]);
+                        const year = Math.round(mouseX);
+                        const yearData = percentageData.find(item => item.year === year);
+                        const value = yearData ? yearData[d.key].toFixed(1) : 0;
 
-                    // Show tooltip
-                    const mouseX = x.invert(d3.pointer(event)[0]);
-                    const year = Math.round(mouseX);
-                    const yearData = percentageData.find(item => item.year === year);
-                    const value = yearData ? yearData[d.key].toFixed(1) : 0;
+                        tooltip.transition()
+                            .duration(50)  // Faster transition for smoother updates
+                            .style("opacity", .9);
 
-                    const tooltip = d3.select("body")
-                        .selectAll(".tooltip")
-                        .data([null])
-                        .join("div")
-                        .attr("class", "tooltip")
-                        .style("opacity", 0);
-
-                    tooltip.transition()
-                        .duration(200)
-                        .style("opacity", .9);
-
-                    tooltip.html(`
-                Year: ${year}<br/>
-                Category: ${d.key}<br/>
-                Percentage: ${value}%
-            `)
-                        .style("left", (event.pageX + 10) + "px")
-                        .style("top", (event.pageY - 28) + "px");
-                })
-                    .on("mouseout", function () {
-                        d3.select(this)
-                            .style("filter", "brightness(1)");  // Reset brightness instead of opacity
-
-                        d3.select(".tooltip")
-                            .transition()
+                        tooltip.html(`
+                            Year: ${year}<br/>
+                            Category: ${d.key}<br/>
+                            Percentage: ${value}%
+                        `)
+                            .style("left", (event.pageX + 10) + "px")
+                            .style("top", (event.pageY - 28) + "px");
+                    })
+                    .on("mouseout", function() {
+                        d3.select(this).style("filter", "brightness(1)");
+                        tooltip.transition()
                             .duration(500)
                             .style("opacity", 0);
                     });
@@ -688,6 +750,7 @@ function generateDistinctColors(categories) {
                     .style("text-anchor", "middle")
                     .style("fill", "white")
                     .text("Percentage of Total");
+
                     
 
             } catch (error) {

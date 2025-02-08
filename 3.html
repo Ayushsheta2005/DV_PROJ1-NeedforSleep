@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Epic Race Analytics</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3.js/7.8.5/d3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a1a;
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #00ff88;
+            font-size: 2.5em;
+            text-shadow: 0 0 10px rgba(0,255,136,0.5);
+            margin-bottom: 40px;
+        }
+
+
+
+/* Flexbox container to prevent overlap */
+.analysis-container {
+    display: flex;
+    flex-wrap: wrap; /* Ensures wrapping */
+    justify-content: center;
+    gap: 30px; /* Space between cards */
+    padding: 20px;
+}
+
+/* Individual analysis card */
+.analysis-section {
+    background: linear-gradient(135deg, #1e1e1e, #2a2a2a);
+    border-radius: 15px;
+    padding: 25px;
+    margin: 0; /* Remove margin to prevent gaps */
+    max-width: 400px; /* Ensures cards are not too wide */
+    width: 100%; /* Makes it responsive */
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.8s ease-out, transform 0.8s ease-out, box-shadow 0.3s ease-in-out;
+}
+
+/* Glow effect on hover */
+.analysis-section:hover {
+    box-shadow: 0 0 25px rgba(0, 255, 136, 0.5);
+    transform: translateY(0);
+}
+
+.analysis-title {
+    color: #00ff88;
+    font-size: 1.6em;
+    text-align: center;
+    margin-bottom: 15px;
+    font-weight: bold;
+}
+
+.analysis-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 10px;
+}
+
+.analysis-item {
+    background: #222;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 255, 136, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    transition: transform 0.3s ease-in-out;
+}
+
+.analysis-item:hover {
+    transform: scale(1.05);
+}
+
+.analysis-rank {
+    background: #00ff88;
+    color: black;
+    font-size: 1.4em;
+    font-weight: bold;
+    padding: 8px 15px;
+    border-radius: 50%;
+    min-width: 50px;
+    text-align: center;
+}
+
+.analysis-details {
+    color: #ddd;
+    font-size: 1em;
+}
+
+.analysis-details p {
+    margin: 5px 0;
+}
+
+
+/* Header Styling */
+.analysis-header {
+    color: #00ff88;
+    font-size: 1.8em;
+    padding-bottom: 12px;
+    border-bottom: 3px solid rgba(0, 255, 136, 0.5);
+    text-align: center;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: border-bottom 0.3s ease-in-out;
+}
+
+/* Subtle glow effect on hover */
+.analysis-header:hover {
+    border-bottom: 3px solid #00ff88;
+}
+
+/* Description Styling */
+.analysis-description {
+    color: #b3b3b3;
+    font-size: 1.1em;
+    text-align: center;
+    margin-top: 15px;
+    font-style: italic;
+}
+
+/* Content Area Styling */
+.analysis-content {
+    color: #e0e0e0;
+    padding: 20px;
+    font-size: 1.2em;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    margin-top: 15px;
+    transition: background 0.3s ease-in-out;
+}
+.axis path,
+.axis line {
+    stroke: #888;
+}
+
+.axis text {
+    fill: #ddd;
+    font-size: 12px;
+}
+
+.analysis-panel {
+    background: #333;
+    padding: 15px;
+    border-radius: 10px;
+    margin-top: 15px;
+}
+
+.analysis-panel h3 {
+    color: #ffcc00;
+}
+
+.analysis-panel p {
+    color: #ddd;
+    font-size: 1em;
+}
+
+.analysis-content {
+    min-height: 150px; /* Adjust based on expected content */
+    overflow: auto; /* Ensures scrolling instead of overflow */
+}
+
+
+/* Slight hover effect for content */
+.analysis-content:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Animation: Fade-in and slide-up */
+.analysis-section.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Responsive Fixes */
+@media (max-width: 768px) {
+    .analysis-container {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .analysis-section {
+        max-width: 90%;
+    }
+}
+
+/* Chart Container - Keeps sections properly spaced */
+.chart-container {
+    background: linear-gradient(135deg, #1e1e1e, #2a2a2a);
+    border-radius: 15px;
+    padding: 25px;
+    margin: 20px auto;
+    max-width: 850px;
+    width: 100%;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.8s ease-out, transform 0.8s ease-out, box-shadow 0.3s ease-in-out;
+}
+
+/* Header Styling */
+.chart-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    margin-bottom: 15px;
+}
+
+.chart-header h2 {
+    color: #00ff88;
+    font-size: 1.8em;
+    text-align: center;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Remove the View Analysis button */
+.analysis-btn {
+    display: none;
+}
+
+/* SVG Chart Styling */
+svg {
+    display: block;
+    margin: 0 auto;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Analysis Panel - Always Visible */
+.analysis-panel {
+    background: rgba(0, 255, 136, 0.1);
+    padding: 20px;
+    margin-top: 15px;
+    border-radius: 12px;
+    box-shadow: inset 0 0 15px rgba(0, 255, 136, 0.3);
+    transition: background 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+/* Slight hover effect */
+.analysis-panel:hover {
+    background: rgba(0, 255, 136, 0.2);
+    transform: scale(1.02);
+}
+
+/* Analysis Panel Headers */
+.analysis-panel h3 {
+    color: #00ff88;
+    font-size: 1.5em;
+    border-bottom: 2px solid rgba(0, 255, 136, 0.5);
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+/* Analysis Panel Content */
+.analysis-panel p {
+    color: #e0e0e0;
+    font-size: 1.1em;
+    text-align: center;
+    font-style: italic;
+}
+
+/* Dynamic Analysis Content */
+#curse-analysis, #gap-analysis {
+    color: #ddd;
+    font-size: 1.2em;
+    margin-top: 10px;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+}
+
+/* Responsive Fixes */
+@media (max-width: 768px) {
+    .chart-container {
+        max-width: 95%;
+    }
+
+    svg {
+        width: 100%;
+        height: auto;
+    }
+}
+
+
+
+       
+
+        .error {
+            background: #ff444444;
+            color: #ff4444;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px auto;
+            max-width: 800px;
+            display: none;
+        }
+        
+
+        h2 {
+            color: #00ff88;
+            margin: 0;
+            font-size: 1.8em;
+        }
+
+        .analysis-btn {
+            background: #444;
+            border: none;
+            color: #fff;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .analysis-btn:hover {
+            background: #00ff88;
+            color: #1a1a1a;
+        }
+
+        .analysis-panel {
+            background: #333;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            display: none;
+            border-left: 4px solid #00ff88;
+        }
+
+        svg {
+            background: #2a2a2a;
+            border-radius: 10px;
+            overflow: visible;
+        }
+
+        .axis path, .axis line {
+            stroke: #666;
+        }
+
+        .axis text {
+            fill: #fff;
+            font-size: 12px;
+        }
+
+        rect {
+            transition: all 0.3s;
+        }
+
+        rect:hover {
+            filter: brightness(1.2);
+        }
+
+        .tooltip {
+            position: absolute;
+            background: rgba(0,0,0,0.8);
+            padding: 10px;
+            border-radius: 5px;
+            pointer-events: none;
+            display: none;
+            color: #fff;
+            border: 1px solid #00ff88;
+        }
+    </style>
+</head>
+<body>
+    <h1>🏃‍♂️  RACE ANALYTICS INFERENCES 🏆</h1>
+
+    <div class="chart-container" id="curse-container">
+        <div class="chart-header">
+            <h2>🎭 The Second Place Saga</h2>
+            <button class="analysis-btn">View Analysis</button>
+        </div>
+        <svg id="curse-chart" width="800" height="400"></svg>
+        <!-- <div class="analysis-container"> -->
+            <h3>Key Insights:</h3>
+            <p>Teams caught in the "Second Place Curse" - a mysterious pattern where history repeats itself!</p>
+            <div id="curse-analysis"></div>
+        <!-- </div> -->
+    </div>
+
+    <div class="analysis-container">
+        <section id="cinderella-stories" class="analysis-section">
+            <h2 class="analysis-header">Cinderella Stories</h2>
+            <p class="analysis-description">Identifying teams that made unexpected jumps in performance.</p>
+            <div class="analysis-content">
+                <p>Analysis goes here...</p>
+            </div>
+        </section>
+    
+        <section id="lucky-bed-chronicles" class="analysis-section">
+            <h2 class="analysis-header">Lucky Bed Chronicles</h2>
+            <p class="analysis-description">Exploring teams that got unusually favorable race conditions.</p>
+            <div class="analysis-content">
+                <p>Analysis goes here...</p>
+            </div>
+        </section>
+    </div>
+    
+
+
+    <div class="chart-container" id="gap-container">
+        <div class="chart-header">
+            <h2>⚡ Victory Margin Evolution</h2>
+            <button class="analysis-btn">View Analysis</button>
+        </div>
+        <svg id="gap-chart" width="800" height="400"></svg>
+        <!-- <div class="analysis-container"> -->
+            <h3>Key Insights:</h3>
+            <p>The epic tale of closing gaps and nail-biting finishes!</p>
+            <div id="gap-analysis"></div>
+        <!-- </div> -->
+    </div>
+
+ 
+    <div class="tooltip"></div>
+
+    <script>
+       // Main data loading and processing
+d3.csv("bed_race_results.csv").then(function(data) {
+    // Data preprocessing
+    data.forEach(d => {
+        d.Year = +d.Year;
+        d.Position = +d.Position;
+        d.Time = +d["Time (Minutes)"] * 60 + +d["Time (Seconds)"];
+    });
+
+    // Initialize all charts
+    createSecondPlaceSaga(data);
+    createVictoryMarginChart(data);
+    displayTopLuckyBeds(data);
+    displayCinderellaStories(data);
+});
+
+// 1. Second Place Saga Chart
+function createSecondPlaceSaga(data) {
+    const margin = {top: 20, right: 40, bottom: 80, left: 60};
+    const width = 800 - margin.left - margin.right;
+    const height = 400 - margin.top - margin.bottom;
+
+    // Process data for second place teams
+    let secondPlaceTeams = d3.group(data.filter(d => d.Position === 2), d => d["Team Name"]);
+    let curseData = Array.from(secondPlaceTeams, ([team, records]) => ({
+        team,
+        count: records.length,
+        years: records.map(r => r.Year)
+    })).sort((a, b) => b.count - a.count);
+
+    // Most cursed team
+    let mostCursedTeam = curseData.length > 0 ? curseData[0].team : "N/A";
+    let mostCursedCount = curseData.length > 0 ? curseData[0].count : 0;
+    let mostCursedYears = curseData.length > 0 ? curseData[0].years.join(", ") : "None";
+
+    // Create SVG
+    let svg = d3.select("#curse-chart")
+        .append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+    // Set up scales
+    let xScale = d3.scaleBand()
+        .domain(curseData.map(d => d.team))
+        .range([0, width])
+        .padding(0.2);
+
+    let yScale = d3.scaleLinear()
+        .domain([0, d3.max(curseData, d => d.count)])
+        .nice()
+        .range([height, 0]);
+
+    // Create bars
+    svg.selectAll("rect")
+        .data(curseData)
+        .enter()
+        .append("rect")
+        .attr("x", d => xScale(d.team))
+        .attr("y", height)
+        .attr("width", xScale.bandwidth())
+        .attr("height", 0)
+        .attr("fill", "#00ff88")
+        .on("mouseover", function(event, d) {
+            d3.select(this).attr("fill", "#ff00ff");
+            showTooltip(event, d, `<b>${d.team}</b><br>🏆 Second Places: <b>${d.count}</b><br>📅 Years: ${d.years.join(", ")}`);
+        })
+        .on("mouseout", function() {
+            d3.select(this).attr("fill", "#00ff88");
+            hideTooltip();
+        });
+
+    // Animate bars
+    svg.selectAll("rect")
+        .transition()
+        .duration(1000)
+        .delay((d, i) => i * 100)
+        .attr("y", d => yScale(d.count))
+        .attr("height", d => height - yScale(d.count));
+
+    // Add X-axis
+    svg.append("g")
+        .attr("class", "axis")
+        .attr("transform", `translate(0,${height})`)
+        .call(d3.axisBottom(xScale))
+        .selectAll("text")
+        .attr("transform", "rotate(-45)")
+        .style("text-anchor", "end")
+        .style("fill", "#ddd");
+
+    // Add Y-axis
+    svg.append("g")
+        .attr("class", "axis")
+        .call(d3.axisLeft(yScale))
+        .selectAll("text")
+        .style("fill", "#ddd");
+
+    // X-axis Label
+    svg.append("text")
+        .attr("x", width / 2)
+        .attr("y", height + 60)
+        .attr("text-anchor", "middle")
+        .style("fill", "#ddd")
+        .style("font-size", "14px")
+        .text("Teams");
+
+    // Y-axis Label
+    svg.append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("x", -height / 2)
+        .attr("y", -45)
+        .attr("text-anchor", "middle")
+        .style("fill", "#ddd")
+        .style("font-size", "14px")
+        .text("Second Place Finishes");
+
+    // Update analysis panel
+    updateAnalysis("curse-analysis", `
+        <b>Most Cursed Team:</b> ${mostCursedTeam} 🏆<br>
+        <b>Second Place Finishes:</b> ${mostCursedCount}<br>
+        <b>Years:</b> ${mostCursedYears}
+    `);
+}
+
+
+// 1. Lucky Bed Chronicles Chart (Updated)
+function displayTopLuckyBeds(data) {
+    let bedPerformance = Array.from(d3.group(data, d => d["Bed Number"]), ([bed, records]) => {
+        return {
+            bedNumber: bed,
+            wins: records.filter(r => r.Position === 1).length,
+            avgPosition: d3.mean(records, r => r.Position),
+            totalRaces: records.length
+        };
+    });
+
+    // Sort beds
+    bedPerformance.sort((a, b) => b.wins - a.wins || a.avgPosition - b.avgPosition);
+
+    // Get top 5 beds
+    const top5Beds = bedPerformance.slice(0, 5);
+
+    // Generate HTML
+    let html = `
+        <h3 class="analysis-title">🏆 Top 5 Lucky Beds</h3>
+        <div class="analysis-list">`;
+
+    top5Beds.forEach((bed, index) => {
+        html += `
+            <div class="analysis-item">
+                <div class="analysis-rank">#${index + 1}</div>
+                <div class="analysis-details">
+                    <strong>Bed ${bed.bedNumber}</strong>
+                    <p>🏅 Wins: <b>${bed.wins}</b></p>
+                    <p>📉 Avg Position: <b>${bed.avgPosition.toFixed(2)}</b></p>
+                    <p>📊 Total Races: <b>${bed.totalRaces}</b></p>
+                </div>
+            </div>`;
+    });
+
+    html += `</div>`;
+
+    // Insert into Lucky Bed Chronicles section
+    document.querySelector("#lucky-bed-chronicles .analysis-content").innerHTML = html;
+}
+
+function displayCinderellaStories(data) {
+    data.sort((a, b) => a["Team Name"].localeCompare(b["Team Name"]) || a.Year - b.Year);
+
+    let rankChanges = [];
+    
+    for (let i = 1; i < data.length; i++) {
+        const current = data[i];
+        const previous = data[i - 1];
+        
+        if (current["Team Name"] === previous["Team Name"] && current.Year === previous.Year + 1) {
+            const improvement = previous.Position - current.Position;
+            if (improvement > 0) {
+                rankChanges.push({
+                    team: current["Team Name"],
+                    year: current.Year,
+                    improvement: improvement,
+                    finalPosition: current.Position,
+                    startPosition: previous.Position
+                });
+            }
+        }
+    }
+
+    rankChanges.sort((a, b) => b.improvement - a.improvement || a.finalPosition - b.finalPosition);
+
+    // Get top 5 improvements
+    const top5Improvements = rankChanges.slice(0, 5);
+
+    let html = `
+        <h3 class="analysis-title">🚀 Top 5 Cinderella Stories</h3>
+        <div class="analysis-list">`;
+
+    top5Improvements.forEach((story, index) => {
+        html += `
+            <div class="analysis-item">
+                <div class="analysis-rank">#${index + 1}</div>
+                <div class="analysis-details">
+                    <strong>${story.team} (${story.year})</strong>
+                    <p>📈 Jumped <b>${story.improvement}</b> positions</p>
+                    <p>🔽 Start: <b>${story.startPosition}</b> → 🔼 End: <b>${story.finalPosition}</b></p>
+                </div>
+            </div>`;
+    });
+
+    html += `</div>`;
+
+    // Insert into Cinderella Stories section
+    document.querySelector("#cinderella-stories .analysis-content").innerHTML = html;
+}
+
+// 3. Victory Margin Evolution Chart
+// Victory Margin Evolution Chart (Enhanced)
+function createVictoryMarginChart(data) {
+    const margin = {top: 40, right: 50, bottom: 80, left: 60};
+    const width = 800 - margin.left - margin.right;
+    const height = 400 - margin.top - margin.bottom;
+
+    // Calculate victory margins
+    let margins = [];
+    data.forEach(race => {
+        if (race.Position === 1) {
+            let secondPlace = data.find(d => d.Year === race.Year && d.Position === 2);
+            if (secondPlace) {
+                margins.push({
+                    year: race.Year,
+                    margin: secondPlace.Time - race.Time,
+                    winner: race["Team Name"],
+                    secondPlace: secondPlace["Team Name"]
+                });
+            }
+        }
+    });
+
+    // Sort margins by year
+    margins.sort((a, b) => a.year - b.year);
+
+    // SVG setup
+    let svg = d3.select("#gap-chart")
+        .append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+    // Scales
+    let xScale = d3.scaleLinear()
+        .domain(d3.extent(margins, d => d.year))
+        .range([0, width]);
+
+    let yScale = d3.scaleLinear()
+        .domain([0, d3.max(margins, d => d.margin)])
+        .nice()
+        .range([height, 0]);
+
+    // Line generator
+    let line = d3.line()
+        .x(d => xScale(d.year))
+        .y(d => yScale(d.margin))
+        .curve(d3.curveMonotoneX);  // Makes it smoother
+
+    // Line path
+    svg.append("path")
+        .datum(margins)
+        .attr("fill", "none")
+        .attr("stroke", "#FFC107")
+        .attr("stroke-width", 3)
+        .attr("d", line);
+
+    // Points
+    let points = svg.selectAll("circle")
+        .data(margins)
+        .enter()
+        .append("circle")
+        .attr("cx", d => xScale(d.year))
+        .attr("cy", d => yScale(d.margin))
+        .attr("r", 6)
+        .attr("fill", "#FFC107")
+        .attr("stroke", "#000")
+        .attr("stroke-width", 1.5)
+        .on("mouseover", function(event, d) {
+            d3.select(this).transition().attr("r", 10).attr("fill", "#FF5722");
+            showTooltip(event, d, `<b>🏆 Year: ${d.year}</b><br>🥇 Winner: ${d.winner}<br>🥈 Second: ${d.secondPlace}<br>⏱ Margin: ${d.margin.toFixed(2)}s`);
+        })
+        .on("mouseout", function() {
+            d3.select(this).transition().attr("r", 6).attr("fill", "#FFC107");
+            hideTooltip();
+        });
+
+    // Axes
+    svg.append("g")
+        .attr("transform", `translate(0,${height})`)
+        .call(d3.axisBottom(xScale).tickFormat(d3.format("d")))
+        .selectAll("text")
+        .attr("transform", "rotate(-45)")
+        .style("text-anchor", "end")
+        .style("fill", "#ddd");
+
+    svg.append("g")
+        .call(d3.axisLeft(yScale))
+        .selectAll("text")
+        .style("fill", "#ddd");
+
+    // Axis Labels
+    svg.append("text")
+        .attr("x", width / 2)
+        .attr("y", height + 50)
+        .attr("text-anchor", "middle")
+        .style("fill", "#ddd")
+        .style("font-size", "14px")
+        .text("Year");
+
+    svg.append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("x", -height / 2)
+        .attr("y", -45)
+        .attr("text-anchor", "middle")
+        .style("fill", "#ddd")
+        .style("font-size", "14px")
+        .text("Winning Margin (Seconds)");
+
+    // Additional Analysis
+    let topClosest = margins.sort((a, b) => a.margin - b.margin).slice(0, 3);
+    let analysisText = topClosest.map((d, i) => `<b>#${i + 1}</b> ${d.year}: ${d.winner} won by <b>${d.margin.toFixed(2)}s</b> over ${d.secondPlace}`).join("<br>");
+
+    updateAnalysis("gap-analysis", `
+        <b>🏁 Closest Finishes:</b><br>${analysisText}
+    `);
+}
+
+// Utility Functions
+function showTooltip(event, d, html) {
+    d3.select('.tooltip')
+        .style("display", "block")
+        .html(html)
+        .style("left", (event.pageX + 10) + "px")
+        .style("top", (event.pageY - 10) + "px");
+}
+
+function hideTooltip() {
+    d3.select('.tooltip').style("display", "none");
+}
+
+function updateAnalysis(id, text) {
+    document.getElementById(id).innerHTML = `<p>${text}</p>`;
+}
+
+function addAxes(svg, xScale, yScale, height) {
+    svg.append("g")
+        .attr("class", "axis")
+        .attr("transform", `translate(0,${height})`)
+        .call(d3.axisBottom(xScale))
+        .selectAll("text")
+        .attr("transform", "rotate(-45)")
+        .style("text-anchor", "end");
+
+    svg.append("g")
+        .attr("class", "axis")
+        .call(d3.axisLeft(yScale));
+}
+
+// Initialize animation handlers
+document.querySelectorAll('.chart-container').forEach((container, index) => {
+    gsap.to(container, {
+        opacity: 1,
+        y: 0,
+        duration: 0.5,
+        delay: index * 0.2
+    });
+});
+
+// Initialize analysis panel toggles
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.analysis-content').forEach(panel => {
+        gsap.from(panel, {
+            height: 0,
+            opacity: 0,
+            duration: 0.5,
+            ease: "power1.out"
+        });
+    });
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll(".analysis-section").forEach(section => {
+        setTimeout(() => section.classList.add("visible"), 300);
+    });
+});
+
+
+    </script>
+</body>
+</html>

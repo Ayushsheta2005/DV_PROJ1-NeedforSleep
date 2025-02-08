@@ -1,3 +1,4 @@
+<currentDocument>
 <!DOCTYPE html>
 <html>
 
@@ -17,11 +18,11 @@
 
         .container {
             background: rgba(209, 205, 205, 0.05);
-            padding: 30px;
+            padding: 15px;  
+            margin: 10px auto;  
             border-radius: 15px;
             box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
             max-width: 1400px;
-            margin: 0 auto;
             backdrop-filter: blur(4px);
             border: 1px solid rgba(255, 255, 255, 0.18);
         }
@@ -171,7 +172,9 @@
 .trend-declining {
     color: #f87171;
 }
-        
+        #heatmap {
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 
@@ -233,38 +236,42 @@
             // Existing processData function with minimal changes
             const startYear = 2015;
             const years = [...new Set(csvData.map(d => +d.Year))]
-                .filter(year => year >= startYear)
-                .sort();
-
+            .filter(year => year >= startYear && year !== 2016)
+            .sort();
+            console.log(years);
             csvData.forEach(d => {
-                d.totalSeconds = (+d['Time (Minutes)'] * 60) + (+d['Time (Seconds)']);
+            d.totalSeconds = (+d['Time (Minutes)'] * 60) + (+d['Time (Seconds)']);
             });
+            console.log(csvData);
 
             const categories = [...new Set(csvData.map(d => d.Category))];
+            console.log(categories)
             const validCategories = categories.filter(category => {
-                return years.every(year =>
-                    csvData.some(d => +d.Year === year && d.Category === category)
-                );
+
+            return years.every(year =>
+                csvData.some(d => +d.Year === year && d.Category === category)
+            );
             });
+            console.log(validCategories);
 
             const processedData = [];
             validCategories.forEach(category => {
-                let previousAvg = null;
-                years.forEach(year => {
-                    const yearData = csvData.filter(d =>
-                        +d.Year === year && d.Category === category
-                    );
-                    const avgTime = d3.mean(yearData, d => d.totalSeconds);
-                    const trend = previousAvg ? (previousAvg - avgTime) : 0;
-                    processedData.push({
-                        year: year,
-                        category: category,
-                        value: avgTime,
-                        rawData: yearData,
-                        trend: trend
-                    });
-                    previousAvg = avgTime;
+            let previousAvg = null;
+            years.forEach(year => {
+                const yearData = csvData.filter(d =>
+                +d.Year === year && d.Category === category
+                );
+                const avgTime = d3.mean(yearData, d => d.totalSeconds);
+                const trend = previousAvg ? (previousAvg - avgTime) : 0;
+                processedData.push({
+                year: year,
+                category: category,
+                value: avgTime,
+                rawData: yearData,
+                trend: trend
                 });
+                previousAvg = avgTime;
+            });
             });
 
             return { years, categories: validCategories, data: processedData };
@@ -274,9 +281,9 @@
         function createHeatmap(data) {
             d3.select("#heatmap").html("");
 
-            const margin = { top: 50, right: 70, bottom: 50, left: 120 };
+            const margin = { top: 30, right: 100, bottom: 30, left: 120 };  // reduced top and bottom margins
             const width = 800 - margin.left - margin.right;
-            const height = Math.max(400, data.categories.length * 40) - margin.top - margin.bottom;
+            const height = Math.max(350, data.categories.length * 35) - margin.top - margin.bottom;  // adjusted height calculation
 
             const svg = d3.select("#heatmap")
                 .append("svg")
@@ -418,20 +425,22 @@
         const legendHeight = height;
         const legend = svg.append("g")
             .attr("class", "legend")
-            .attr("transform", `translate(${width + 20}, 0)`);
+            .attr("transform", `translate(${width + 25}, 0)`);  // adjusted position
 
         const legendScale = d3.scaleSequential()
             .interpolator(d3.interpolateRgb("#0ea5e9", "#0c4a6e"))
             .domain([d3.max(data.data, d => d.value), d3.min(data.data, d => d.value)]);
 
         legend.append("g")
-            .attr("transform", `translate(${legendWidth},0)`)
+            .attr("transform", `translate(${legendWidth + 5},0)`)  // added padding
             .call(d3.axisRight()
                 .scale(d3.scaleLinear()
                     .domain([d3.max(data.data, d => d.value), d3.min(data.data, d => d.value)])
                     .range([legendHeight, 0]))
                 .ticks(5)
-                .tickFormat(formatTime));
+                .tickFormat(formatTime))
+            .selectAll("text")  // adjust text position
+            .attr("x", 5);      // move text slightly right
 
         const legendGradient = legend.append("defs")
             .append("linearGradient")
@@ -454,18 +463,27 @@
             .style("fill", "url(#legend-gradient)")
             .style("stroke", "rgba(255, 255, 255, 0.2)")
             .style("stroke-width", "1px");
-        }
 
+        // Add legend title
+        legend.append("text")
+            .attr("class", "legend-title")
+            .attr("x", -10)
+            .attr("y", -10)
+            .attr("text-anchor", "start")
+            .text("Avg Time");
+        }
+        
         // Load and initialize the visualization
         d3.csv("bed_race_results.csv")
-            .then(data => {
+        .then(data => {
                 if (data.length === 0) {
                     showError("No data found in the CSV file");
                     return;
                 }
-
+                
                 const processedData = processData(data);
-
+                console.log(data);
+                
                 if (processedData.categories.length === 0) {
                     showError("No categories found that participated in all years since 2015");
                     return;
@@ -480,3 +498,4 @@
 </body>
 
 </html>
+</currentDocument>

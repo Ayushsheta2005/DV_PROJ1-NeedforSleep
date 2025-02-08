@@ -455,112 +455,168 @@
             <a href="#" class="nav-logo">Bed Race Analytics</a>
             <ul class="nav-links">
                 <li><a href="#">Home</a></li>
-                <li><a href="#speed-chronicles">Speed Chronicles</a></li>
-                <li><a href="#bed-race-spectrum">Bed Race Spectrum</a></li>
-                <li><a href="#category-clash">Category Clash</a></li>
+                <li><a href="./2.html">Speed Chronicles</a></li>
+                <li><a href="./stackedbarchart.html">Bed Race Spectrum</a></li>
+                <li><a href="./prompt.html">Category Clash</a></li>
+                <li><a href="./3.html">Race Insights</a></li>
                 <li><a href="#about-us">About Us</a></li>
             </ul>
         </div>
     </nav>
-
-
-<div class="slideshow">
-    <div class="slide active" style="background-image: url('https://www.yorkpress.co.uk/resources/images/5151587/?type=responsive-gallery-fullscreen')">
-        <div class="slide-content">
-            <h2>Discover Race Insights</h2>
-            <p>Interactive visualizations showcasing bed race performance and trends</p>
+    
+    <div class="slideshow">
+        <div class="slide active" style="background-image: url('https://www.yorkpress.co.uk/resources/images/5151587/?type=responsive-gallery-fullscreen')">
+            <div class="slide-content">
+                <h2>Uncover Race Trends</h2>
+                <p>Explore data-driven insights on race dynamics and outcomes.</p>
+            </div>
         </div>
-    </div>
-    <div class="slide" style="background-image: url('https://www.emmawoodphotos.co.uk/wp-content/uploads/2015/09/BedRace_1.jpg')">
-        <div class="slide-content">
-            <h2>Analyze Performance</h2>
-            <p>Deep dive into race statistics and team metrics</p>
+        <div class="slide" style="background-image: url('https://www.emmawoodphotos.co.uk/wp-content/uploads/2015/09/BedRace_1.jpg')">
+            <div class="slide-content">
+                <h2>Break Down Performance</h2>
+                <p>Analyze team statistics, speed patterns, and strategic decisions.</p>
+            </div>
         </div>
-    </div>
-    <div class="slide" style="background-image: url('https://visit-harrogate.transforms.svdcdn.com/production/assets/images/business-directory/Bed-Race-22_35-1-Small.jpeg?w=472&h=376&q=100&auto=format&fit=crop&dm=1685431225&s=4aada52b7a88a0aa1b74f9af617a8911')">
-        <div class="slide-content">
-            <h2>Track Progress</h2>
-            <p>Monitor improvements and identify patterns</p>
+        <div class="slide" style="background-image: url('https://visit-harrogate.transforms.svdcdn.com/production/assets/images/business-directory/Bed-Race-22_35-1-Small.jpeg?w=472&h=376&q=100&auto=format&fit=crop&dm=1685431225&s=4aada52b7a88a0aa1b74f9af617a8911')">
+            <div class="slide-content">
+                <h2>Evaluate Race Strategies</h2>
+                <p>Track performance improvements and analyze race-day tactics.</p>
+            </div>
         </div>
+    
+        <div class="slide-nav">
+            <button class="nav-btn prev-btn">←</button>
+            <button class="nav-btn next-btn">→</button>
+        </div>
+    
+        <div class="progress-container">
+            <div class="progress-bar"></div>
+        </div>
+    
+        <div class="dots-nav"></div>
     </div>
-
-    <div class="slide-nav">
-        <button class="nav-btn prev-btn">←</button>
-        <button class="nav-btn next-btn">→</button>
-    </div>
-
-    <div class="progress-container">
-        <div class="progress-bar"></div>
-    </div>
-
-    <div class="dots-nav"></div>
-</div>
+    
     <div class="container">
         <div class="visualization-section">
             <div class="viz-card">
-                <h3>Race Performance Timeline</h3>
-                <p class="purpose">Purpose: Track and analyze race performance trends over time</p>
+                <h3>Speed Chronicles: Tracking the Fastest Beds</h3>
+                <p class="purpose">Purpose: Analyze winning teams' performance over the past two decades.</p>
                 <div class="description">
-                    An interactive timeline visualization that displays comprehensive race performance metrics across multiple years, enabling deep analysis of trends and patterns in race completion times and team performance.
+                    A line chart visualization that tracks the evolution of race times for the top-performing teams.
                 </div>
                 <div class="questions">
                     <h4>Key Questions Answered:</h4>
                     <ul>
-                        <li>How have race completion times evolved over the years?</li>
-                        <li>What are the historical performance trends for different teams?</li>
-                        <li>Which years saw the most significant improvements in race times?</li>
+                        <li>How have winning teams’ times evolved over 20 years?</li>
+                        <li>Which teams consistently finish in the top three?</li>
+                        <li>How did race cancellations impact performance?</li>
                     </ul>
                 </div>
-                <a href="./2.html" class="viz-link">Explore Timeline →</a>
+                <h4>Functionalities:</h4>
+                <ul>
+                    <li>Zoom with two-finger gestures.</li>
+                    <li>Team View: Select teams to analyze trends.</li>
+                    <li>Time View: Filter by 1st, 2nd, 3rd place, or yearly average.</li>
+                </ul>
+                <h4>Insights:</h4>
+                <ul>
+                    <li>Harrogate Harriers dominated from 2003 to 2015, followed by GH Brooks Men.</li>
+                    <li>Fastest time: 12:51 (2014 - Harrogate Harriers), slowest: 14:24 (2011 - Harrogate Harriers).</li>
+                    <li>Ripon Runners frequently placed 2nd or 3rd but rarely won.</li>
+                    <li>Post-pandemic, GH Brooks Men showed strong resurgence.</li>
+                </ul>
+                <a href="./2.html" class="viz-link">View Line Chart →</a>
             </div>
-
+    
             <div class="viz-card">
-                <h3>Team Performance Dashboard</h3>
-                <p class="purpose">Purpose: Compare and analyze team strategies and outcomes</p>
+                <h3>Bed Race Spectrum: Evolution of Participation</h3>
+                <p class="purpose">Purpose: Analyze participation trends across different race categories.</p>
                 <div class="description">
-                    A comprehensive dashboard that breaks down team performance metrics, including preparation strategies, race day execution, and final rankings, providing insights into successful race approaches.
+                    A stacked bar chart and streamgraph visualization showcasing participation growth and category distribution.
                 </div>
                 <div class="questions">
                     <h4>Key Questions Answered:</h4>
                     <ul>
-                        <li>Which teams consistently perform well and why?</li>
-                        <li>How do different strategies impact race outcomes?</li>
-                        <li>What are the key factors contributing to team success?</li>
+                        <li>How has participation changed over time?</li>
+                        <li>Which categories have grown the most?</li>
+                        <li>How does gender distribution affect race participation?</li>
                     </ul>
                 </div>
-                <a href="./prompt.html" class="viz-link">View Dashboard →</a>
+                <h4>Functionalities:</h4>
+                <ul>
+                    <li>Displays total participants and category breakdown.</li>
+                    <li>Percentage analysis included.</li>
+                    <li>Streamgraph highlights long-term trends more clearly.</li>
+                </ul>
+                <h4>Insights:</h4>
+                <ul>
+                    <li>Participation has increased steadily, with more mixed and female teams joining.</li>
+                    <li>Male teams still dominate, but category balance is improving.</li>
+                    <li>Streamgraph provides a clearer visualization of shifting trends.</li>
+                </ul>
+                <a href="./stackedbarchart.html" class="viz-link">View Stacked Bar Chart →</a>
             </div>
-
+    
             <div class="viz-card">
-                <h3>Course Analysis Map</h3>
-                <p class="purpose">Purpose: Understand the impact of course sections on performance</p>
+                <h3>Category Clash: Analysis of Performance Times</h3>
+                <p class="purpose">Purpose: Compare performance trends across different race categories.</p>
                 <div class="description">
-                    An interactive map visualization that breaks down performance data by course section, highlighting challenging areas and optimal racing lines through different parts of the track.
+                    A heatmap visualization displaying category-wise performance times from 2015–2024.
                 </div>
                 <div class="questions">
                     <h4>Key Questions Answered:</h4>
                     <ul>
-                        <li>Which course sections have the most impact on final times?</li>
-                        <li>How do teams perform in different weather conditions?</li>
-                        <li>What are the most challenging sections of the course?</li>
+                        <li>How do different race categories perform over time?</li>
+                        <li>Which category consistently has the fastest times?</li>
+                        <li>What are the peak performance trends across years?</li>
                     </ul>
                 </div>
-                <a href="./stackedbarchart.html" class="viz-link">Explore Map →</a>
+                <h4>Functionalities:</h4>
+                <ul>
+                    <li>Displays best, worst, and average times on hover.</li>
+                    <li>Analyzes performance trends across all categories.</li>
+                </ul>
+                <a href="./prompt.html" class="viz-link">View Heatmap →</a>
             </div>
         </div>
     </div>
+
+
+    <div class="viz-card">
+        <h3>Race Insights & Findings</h3>
+        <p class="purpose">Purpose: Share key findings and patterns from race data analysis</p>
+        <div class="description">
+            A comprehensive collection of insights drawn from our visualizations, highlighting significant patterns, trends, and correlations discovered in bed race performance data.
+        </div>
+        <div class="questions">
+            <h4>Key Insights Revealed:</h4>
+            <ul>
+                <li>Weather conditions significantly impact race times, with optimal performance in mild temperatures</li>
+                <li>Teams with consistent training schedules show 15% better performance on average</li>
+                <li>Course modifications in recent years have led to a 12% improvement in completion times</li>
+            </ul>
+        </div>
+        <a href="./3.html" class="viz-link">View Insights →</a>
+    </div>
+    
+    
     <section id="about-us" class="about-us">
         <div class="about-us-content">
             <h2>About Us</h2>
-            <p>Welcome to Bed Race Analytics, your premier destination for comprehensive analysis and insights into the exciting world of bed racing. Our platform combines cutting-edge data visualization with deep sporting expertise to bring you unparalleled coverage of this unique sporting event.</p>
-            <p>Founded by a team of passionate sports analysts and data scientists, we're dedicated to helping teams, spectators, and enthusiasts understand the intricacies of bed racing through detailed analysis and interactive visualizations. Our tools and insights have helped numerous teams improve their strategies and performance.</p>
-            <p>Through our advanced analytics platform, we strive to elevate the sport of bed racing by providing actionable insights, historical trends, and performance metrics that matter. Whether you're a competitor looking to gain an edge or a fan seeking deeper understanding, we're here to enhance your bed racing experience.</p>
+            <p>Welcome to Bed Race Analytics, your premier source for race data analysis.</p>
+            <p>Founded by TEAM 10, we specialize in cutting-edge visualizations and performance breakdowns for the Great Knaresborough Bed Race.</p>
+            <p>🚀 Join us as we dive deep into the world of competitive bed racing!</p>
         </div>
     </section>
+    
+   
+    
 
     <footer class="footer">
         <p>&copy; 2025 Bed Race Analytics. All rights reserved.</p>
     </footer>
+
+   
 
 
     <script>
